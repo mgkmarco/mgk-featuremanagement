@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using FeatureManagement.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -17,9 +18,11 @@ namespace FeatureManagement.Controllers
 		};
 
 		private readonly ILogger<WeatherForecastController> _logger;
+		private readonly IWeatherForecastService _weatherForecastService;
 
-		public WeatherForecastController(ILogger<WeatherForecastController> logger)
+		public WeatherForecastController(IWeatherForecastService weatherForecastService, ILogger<WeatherForecastController> logger)
 		{
+			_weatherForecastService = weatherForecastService ?? throw new ArgumentNullException(nameof(IWeatherForecastService));
 			_logger = logger;
 		}
 
@@ -34,6 +37,22 @@ namespace FeatureManagement.Controllers
 				Summary = Summaries[rng.Next(Summaries.Length)]
 			})
 			.ToArray();
+		}
+
+		[HttpGet("registration")]
+		public async Task<bool> ShouldAllowBlockOnRegistrationAsync([FromQuery]string countryAlpha2Code)
+		{
+			var isEnabled = await _weatherForecastService.ShouldAllowBlockOnRegistrationAsync(countryAlpha2Code);
+
+			return isEnabled;
+		}
+
+		[HttpGet("fallback")]
+		public async Task<bool> ShouldFallbackOnServiceUnavailableAsync([FromQuery]string countryAlpha2Code)
+		{
+			var isEnabled = await _weatherForecastService.ShouldFallbackOnServiceUnavailableAsync(countryAlpha2Code);
+
+			return isEnabled;
 		}
 	}
 }
